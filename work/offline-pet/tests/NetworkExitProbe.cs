@@ -1,0 +1,3 @@
+using System;
+using System.IO;
+class NetworkExitProbe{static int Main(string[] args){try{var result=NetworkExit.Fetch();bool valid=!String.IsNullOrEmpty(result.Ip)&&!String.IsNullOrEmpty(result.Country)&&!String.IsNullOrEmpty(result.CountryCode)&&result.CountryCode.Length==2&&result.CheckedUtc>DateTime.UtcNow.AddMinutes(-1);Console.WriteLine((valid?"PASS":"FAIL")+" Windows HTTPS exit lookup: IP/country/flag code/time valid="+valid);if(args.Length>0)File.WriteAllText(Path.Combine(args[0],"network-exit-results.json"),"{\"checks\":1,\"failures\":"+(valid?0:1)+",\"full_ip_logged\":false}");return valid?0:1;}catch(Exception e){Console.WriteLine("FAIL Windows HTTPS exit lookup: "+e.GetType().Name+" "+e.Message);return 1;}}}

@@ -1,0 +1,12 @@
+using System;
+class VoiceLogicTests {
+ static int failures;static void Check(string name,bool value){Console.WriteLine((value?"PASS ":"FAIL ")+name);if(!value)failures++;}
+ static int Main(){
+  var json=new System.Web.Script.Serialization.JavaScriptSerializer();var old=json.Deserialize<VoiceSettings>("{\"Enabled\":true,\"Volume\":0.2}");Check("old settings enable click preview by default",old.ClickToPreview&&Math.Abs(old.Volume-.2)<.001);var off=json.Deserialize<VoiceSettings>("{\"ClickToPreview\":false}");Check("explicit click preview off survives load",!off.ClickToPreview);
+  var p=new VoicePolicy();Check("first click accepted",p.CanPlay("click","a",0,2,false,false));p.Mark("click","a",0,2);Check("active playback never overlaps",!p.CanPlay("task-complete","b",1,2,true,false));Check("global cooldown",!p.CanPlay("task-complete","b",7,2,false,false));Check("different event after gap",p.CanPlay("task-complete","b",9,2,false,false));Check("rapid clicks suppressed",!p.CanPlay("click","c",12,2,false,false));Check("same key suppressed",!p.CanPlay("task-complete","a",40,2,false,false));Check("expired key accepted",p.CanPlay("click","a",121,2,false,false));Check("fullscreen or hidden suppressed",!p.CanPlay("click","z",200,2,false,true));Check("manual preview can replace sound",p.CanPlay("preview","z",1,2,true,false));
+  Check("system notices stay silent",VoicePolicy.NotificationEvent("system:x",3)==null);Check("file changes stay silent",VoicePolicy.NotificationEvent("file:x",7)==null);Check("codex waiting stays silent",VoicePolicy.NotificationEvent("codex:session",6)==null);Check("turn end does not imply success",VoicePolicy.NotificationEvent("codex:session",3)==null);Check("focus completion handled",VoicePolicy.NotificationEvent("focus",3)=="focus-complete");Check("reminder handled",VoicePolicy.NotificationEvent("timer:x",3)=="reminder");
+  Check("work end can follow cancelled ambient without cooldown",p.CanPlay("work-end",null,1,1,false,false));Check("work end does not overlap active audio",!p.CanPlay("work-end",null,1,1,true,false));
+  var ambient=new VoicePolicy();ambient.Mark("ambient","ambient:kick",0,1);Check("ambient speech has 45 second gap",!ambient.CanPlay("ambient","ambient:deduction",44,1,false,false)&&ambient.CanPlay("ambient","ambient:deduction",46,1,false,false));Check("same ambient action waits two minutes",!ambient.CanPlay("ambient","ambient:kick",60,1,false,false));
+  for(int i=0;i<600;i++)p.Mark("click",i.ToString(),i*200,1);Check("dedup memory bounded",p.KeyCount<=256);return failures==0?0:1;
+ }
+}

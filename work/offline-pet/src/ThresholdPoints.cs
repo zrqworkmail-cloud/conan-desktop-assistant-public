@@ -1,0 +1,6 @@
+using System;using System.Linq;using System.Collections.Generic;using System.Globalization;
+public static class ThresholdPoints {
+ public static double[] Effective(List<double> points,double legacy,double min,double max){return (points??new List<double>{legacy}).Where(v=>!Double.IsNaN(v)&&!Double.IsInfinity(v)&&v>=min&&v<=max).Distinct().OrderBy(v=>v).Take(12).ToArray();}
+ public static double[] Parse(string text,double min,double max){var tokens=(text??"").Split(new[]{',','，','、',';','；',' ','\t','\r','\n'},StringSplitOptions.RemoveEmptyEntries);if(tokens.Length==0)throw new ArgumentException("请至少设置一个预警点。");var list=new List<double>();foreach(string token in tokens){double value;if(!Double.TryParse(token,NumberStyles.Float,CultureInfo.InvariantCulture,out value)||Double.IsNaN(value)||Double.IsInfinity(value)||value<min||value>max)throw new ArgumentException("预警点范围 "+min+"–"+max+"，请用逗号分隔数字。");list.Add(value);}var result=list.Distinct().OrderBy(v=>v).ToArray();if(result.Length>12)throw new ArgumentException("每项最多12个预警点。");return result;}
+ public static string Format(IEnumerable<double> points){return String.Join(", ",points.Select(v=>v.ToString("0.##",CultureInfo.InvariantCulture)));}
+}

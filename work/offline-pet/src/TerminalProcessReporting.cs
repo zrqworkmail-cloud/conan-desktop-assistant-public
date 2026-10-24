@@ -1,0 +1,4 @@
+using System;using System.Windows.Controls;
+partial class TerminalWindow {
+ void BuildProcessReporting(Panel body){var cfg=assistant.Config.Monitor;SettingsLabel(body,"高占用进程汇报");MonitorToggle(body,"采集软件 CPU / GPU 占用排行",()=>cfg.ProcessReportEnabled,v=>cfg.ProcessReportEnabled=v);MonitorToggle(body,"资源预警时附上进程排行",()=>cfg.ProcessReportOnAlert,v=>cfg.ProcessReportOnAlert=v);var count=TaskbarRange(body,"进程汇报 Top K",Math.Max(1,Math.Min(10,cfg.ProcessReportCount)),1,10);count.TextChanged+=(s,e)=>{int k;if(Int32.TryParse(count.Text,out k)&&k>=1&&k<=10)SaveMonitor(()=>cfg.ProcessReportCount=k);};var result=Text("每3秒在后台采样；首次排行需要两次采样。",12);Button(body,"让柯南汇报当前高占用软件",()=>result.Text=assistant.ReportProcessUsage());body.Children.Add(result);SettingDescription(body,"按进程名称合并同一软件。CPU 按整机核心归一化；GPU 按该软件最繁忙的 Windows GPU 引擎，可能与 NVIDIA 整卡占用不同。未就绪、过期和权限不足会说明原因；不读取窗口标题、命令行或文件内容。配音沿用原提醒声，不合成朗读软件名称。");}
+}

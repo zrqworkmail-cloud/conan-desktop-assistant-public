@@ -1,0 +1,12 @@
+using System;using System.Windows;using System.Windows.Controls;using System.Windows.Media;
+internal class ConnectionWindow:Window {
+ internal ConnectionWindow(ConnectionStatus state,string dataFolder,string theme,bool prompt,Action<bool> savePrompt,Action quota,Action source){
+  Title="柯南 · 本机连接与授权";Width=580;SizeToContent=SizeToContent.Height;MaxHeight=680;WindowStartupLocation=WindowStartupLocation.CenterScreen;FontFamily=new FontFamily("Microsoft YaHei UI");Resources=TerminalAppearance.Resources();TerminalAppearance.Palette(Resources,theme);SetResourceReference(BackgroundProperty,"DeskBase");var body=new StackPanel{Margin=new Thickness(24)};Content=new ScrollViewer{Content=body,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};
+  Add(body,"本机连接与授权",24);Add(body,"已确认且未发生变化的授权会在本机记住。这里只提示尚未接通的功能。",13);
+  if(state.QuotaIssue!=null){Add(body,"Codex 额度 · 需要确认",17);Add(body,state.QuotaIssue,13);Button(body,"前往额度授权",()=>{Close();quota();});}
+  if(state.SensorIssue!=null){Add(body,"CPU 温度 · 需要采集器",17);var status=Add(body,state.SensorIssue,13);Button(body,"启动本机温度采集器（Windows UAC）",()=>{try{if(SensorProvider.Running){status.Text="采集器已在运行，请在采集器中开启 Log Sensors 并保持运行。";return;}SensorProvider.Start(dataFolder);status.Text="已请求启动。请保留采集器后台运行，等待日志更新。";}catch(Exception e){if(!(e is System.IO.IOException)&&!(e is UnauthorizedAccessException)&&!(e is System.ComponentModel.Win32Exception))throw;status.Text=e.Message;}});Button(body,"查看温度接入说明",()=>{Close();source();});}
+  Add(body,"个人数据保存在此Windows账户的本地目录；复制程序或更新ZIP不会复制这些数据。额度授权使用当前账户加密，并核对本机标识。",12);var path=new TextBox{Text=dataFolder,IsReadOnly=true,TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,8,0,12)};body.Children.Add(path);var check=new CheckBox{Content="启动时提示尚缺的连接与授权",IsChecked=prompt,Margin=new Thickness(0,8,0,12)};check.SetResourceReference(ForegroundProperty,"DeskText");check.Click+=(s,e)=>savePrompt(check.IsChecked==true);body.Children.Add(check);Button(body,"稍后设置 · 关闭",Close);
+ }
+ static TextBlock Add(Panel body,string text,double size){var line=new TextBlock{Text=text,FontSize=size,TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,8,0,8)};line.SetResourceReference(TextBlock.ForegroundProperty,"DeskText");body.Children.Add(line);return line;}
+ static void Button(Panel body,string text,Action action){var b=new Button{Content=text,Tag=text.StartsWith("前往")||text.StartsWith("启动")?"primary":null,Margin=new Thickness(0,4,0,4),HorizontalAlignment=HorizontalAlignment.Stretch};b.Click+=(s,e)=>action();body.Children.Add(b);}
+}
