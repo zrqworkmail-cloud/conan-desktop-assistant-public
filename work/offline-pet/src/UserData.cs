@@ -29,7 +29,7 @@ static class UserData {
  }
  static void CopyImported(string source,string destination,string name){
   if(name!="assistant.json"){File.Copy(source,destination,true);return;}
-  var json=new JavaScriptSerializer{MaxJsonLength=8388608};var data=json.Deserialize<AssistantConfig>(File.ReadAllText(source));if(data.Monitor==null)data.Monitor=new MonitorConfig();if(data.Monitor.Quota==null)data.Monitor.Quota=new CodexQuotaConfig();data.Monitor.ClashHistory=false;data.Monitor.CodexUsageHistory=false;data.Monitor.HistoryCodexHome="";data.Monitor.Quota.Executable="";data.Monitor.Quota.Home="";data.Monitor.Quota.Enabled=false;File.WriteAllText(destination,json.Serialize(data),new UTF8Encoding(false));
+  var json=new JavaScriptSerializer{MaxJsonLength=8388608};var data=json.Deserialize<AssistantConfig>(File.ReadAllText(source));if(data.Monitor==null)data.Monitor=new MonitorConfig();if(data.Monitor.Quota==null)data.Monitor.Quota=new CodexQuotaConfig();data.Monitor.ClashHistory=false;data.Monitor.CodexUsageHistory=false;data.Monitor.HistoryCodexHome="";data.Monitor.Quota.Executable="";data.Monitor.Quota.Home="";data.Monitor.Quota.Enabled=false;data.Monitor.Quota.Wake=new CodexWakeConfig();File.WriteAllText(destination,json.Serialize(data),new UTF8Encoding(false));
  }
  public static int ImportMissing(string source,string target){
   string[] files=ImportFiles(source);Validate(source,files);Directory.CreateDirectory(target);int copied=0;

@@ -1,6 +1,6 @@
 ﻿using System;using System.IO;using System.Linq;using System.Text;using System.Threading;using System.Threading.Tasks;using System.Windows;
 public static class CrashDiagnostics {
- public const string Version="5.29.1";static int installed;
+ public const string Version="5.30.0";static int installed;
  public static void Install(Application app){if(Interlocked.Exchange(ref installed,1)!=0)return;app.DispatcherUnhandledException+=(s,e)=>Record(e.Exception,"UI dispatcher");AppDomain.CurrentDomain.UnhandledException+=(s,e)=>Record(e.ExceptionObject as Exception,"Unhandled thread");TaskScheduler.UnobservedTaskException+=(s,e)=>Record(e.Exception,"Unobserved background task");}
  public static string Record(Exception error,string context,string directory=null){try{if(error==null)return "";directory=directory??Path.Combine(UserData.DirectoryFor(AppDomain.CurrentDomain.BaseDirectory),"errors");Directory.CreateDirectory(directory);string file=Path.Combine(directory,"crash-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fffffff")+"-"+Guid.NewGuid().ToString("N").Substring(0,6)+".log");string detail=error.ToString();if(detail.Length>32768)detail=detail.Substring(0,32768)+"\n[truncated]";File.WriteAllText(file,"Conan Desktop Assistant "+Version+"\nUTC: "+DateTime.UtcNow.ToString("O")+"\nContext: "+context+"\n"+detail,new UTF8Encoding(false));foreach(var old in Directory.GetFiles(directory,"crash-*.log").OrderByDescending(x=>Path.GetFileName(x),StringComparer.Ordinal).Skip(10))File.Delete(old);return file;}catch(Exception){return "";}}
 }

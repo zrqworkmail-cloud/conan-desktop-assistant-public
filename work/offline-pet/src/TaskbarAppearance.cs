@@ -57,7 +57,7 @@ static class TaskbarPainter {
  public static string QuotaValue(CodexQuotaSnapshot q,int minutes,TaskbarAppearance a,DateTime now){
   if(q==null)return "—";if(q.RequiresAuthorization)return "待授权";
   if(now<q.CheckedUtc||now-q.CheckedUtc>TimeSpan.FromMinutes(5))return "—";
-  var window=q.Windows.FirstOrDefault(w=>w.Minutes==minutes);if(window==null)return "—";if(window.ResetUtc<=now)return "待核验";
+  var window=q.Windows.FirstOrDefault(w=>w.Minutes==minutes);if(window==null)return "—";if(window.PendingStart(now))return a.QuotaDisplay=="remaining"?"100"+(a.HidePercent?"":"%") : "100"+(a.HidePercent?"":"%")+" · 待启动";if(window.ResetUtc<=now)return "待核验";
   string remaining=window.Remaining.ToString("F0",CultureInfo.InvariantCulture)+(a.HidePercent?"":"%");
   if(a.QuotaDisplay=="remaining")return remaining;
   if(a.QuotaDisplay=="query"){var left=q.NextCheckUtc-now;return remaining+" · "+(q.NextCheckUtc==default(DateTime)?"等待查询":left<=TimeSpan.Zero?"正在核验":"查询 "+left.Minutes.ToString("D2")+":"+left.Seconds.ToString("D2"));}

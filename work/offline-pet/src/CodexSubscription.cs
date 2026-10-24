@@ -1,0 +1,8 @@
+using System;using System.Linq;using System.Globalization;using System.Collections.Generic;
+public class CodexSubscriptionConfig {
+ public bool Enabled;public string ExpiresLocal="";public List<int> ReminderDays=new List<int>{1,3,7};public List<string> Sent=new List<string>();
+ public DateTime? Deadline(){DateTime value;return DateTime.TryParseExact(ExpiresLocal,"yyyy-MM-dd'T'HH:mm",CultureInfo.InvariantCulture,DateTimeStyles.None,out value)?(DateTime?)DateTime.SpecifyKind(value,DateTimeKind.Unspecified):null;}
+ public static List<int> ParseDays(string text){var days=ThresholdPoints.Parse(text,0,365);if(days.Any(d=>d!=Math.Floor(d)))throw new ArgumentException("提醒天数请输入0–365之间的整数；0表示到期当天。");return days.Select(d=>(int)d).ToList();}
+ public string Status(DateTime localNow){var deadline=Deadline();if(!deadline.HasValue)return "尚未设置套餐到期时间";var left=deadline.Value-localNow;return (Enabled?"提醒已开启":"提醒已关闭")+" · 到期 "+deadline.Value.ToString("yyyy-MM-dd HH:mm")+" · "+(left<=TimeSpan.Zero?"已到期，请核对续费状态":"剩余 "+BubbleLogic.TimeLeft(left));}
+ public string Observe(DateTime localNow){if(!Enabled)return null;var deadline=Deadline();if(!deadline.HasValue)return null;if(Sent==null)Sent=new List<string>();var points=(ReminderDays??new List<int>()).Where(d=>d>=0&&d<=365).Distinct().OrderBy(d=>d).Take(12).ToArray();var crossed=points.Where(d=>localNow>=deadline.Value.AddDays(-d)&&!Sent.Contains(ExpiresLocal+":"+d)).ToArray();if(crossed.Length==0)return null;foreach(int d in crossed)Sent.Add(ExpiresLocal+":"+d);Sent=Sent.Skip(Math.Max(0,Sent.Count-96)).ToList();return "Codex 套餐到期提醒："+(deadline.Value>localNow?"距离到期还有 "+BubbleLogic.TimeLeft(deadline.Value-localNow):"已到达你设置的到期时间")+"（"+deadline.Value.ToString("yyyy-MM-dd HH:mm")+"）。请核对订阅与续费状态。";}
+}
