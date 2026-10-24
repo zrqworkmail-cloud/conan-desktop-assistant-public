@@ -9,7 +9,7 @@ public class MonitorConfig {
  public string VisualStyle="original";
  public bool StartupAuthorizationPrompt=true;public double DownloadLimitMiB=10;public int RefreshMilliseconds=1000;public CodexQuotaConfig Quota=new CodexQuotaConfig();
  public string ExitProxyMode="system",ExitProxyAddress="";
- public bool ExitLookupEnabled;public string CardBackground="",TaskbarScreen="";public double CardShade=.58;
+ public bool ProxyTimeoutAlerts=true;public int ProxyFailureCount=2,ProxyCheckSeconds=60,ProxyCooldownSeconds=300;public bool ExitLookupEnabled;public string CardBackground="",TaskbarScreen="";public double CardShade=.58;
  public string ExpectedExitIp="",ExpectedExitCountry="";
  public List<NavigationOrder> NavigationOrder=new List<NavigationOrder>();
  public List<ColorPreset> ColorPresets=new List<ColorPreset>();

@@ -13,7 +13,7 @@ class AssistantWindow:Window {
  readonly AssistantRuntime runtime;readonly string home;readonly TabControl tabs=new TabControl();
  readonly ListBox shortcuts=new ListBox(),processes=new ListBox(),watched=new ListBox(),history=new ListBox();
  readonly TextBlock system=new TextBlock(),network=new TextBlock(),codex=new TextBlock();
- AssistantSnapshot snapshot;readonly TextBox shortcutSearch=new TextBox{Margin=new Thickness(0,0,0,8)};
+ readonly TextBlock copyIpStatus=new TextBlock();System.Windows.Controls.Button copyIpButton;bool copyingIp;AssistantSnapshot snapshot;readonly TextBox shortcutSearch=new TextBox{Margin=new Thickness(0,0,0,8)};
  public AssistantWindow(AssistantRuntime data,string folder){
   runtime=data;home=folder;Title="柯南 · 桌面助手";Width=720;Height=540;MinWidth=620;MinHeight=460;
   WindowStartupLocation=WindowStartupLocation.CenterScreen;FontFamily=new FontFamily("Microsoft YaHei UI");FontSize=13;
@@ -26,7 +26,7 @@ class AssistantWindow:Window {
   Button(actions,"移除",()=>{var item=shortcuts.SelectedItem as Shortcut;if(item!=null){runtime.Config.Shortcuts.Remove(item);Save();RefreshShortcuts();}});RefreshShortcuts();
   var info=Page(tabs,"系统与网络");system.Margin=new Thickness(0,0,0,18);info.Children.Add(system);network.TextWrapping=TextWrapping.Wrap;info.Children.Add(network);
   info.Children.Add(new TextBlock{Text="显示本机活动网卡的IPv4地址；不代表互联网连通性，不查询公网IP。",TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,16,0,10)});
-  Button(info,"复制IP地址",()=>{if(snapshot!=null&&!String.IsNullOrEmpty(snapshot.IPText))Clipboard.SetText(snapshot.IPText);});
+  copyIpButton=Button(info,"复制IP地址",CopyIp);copyIpStatus.TextWrapping=TextWrapping.Wrap;info.Children.Add(copyIpStatus);
   var monitor=Page(tabs,"进程监控");monitor.Children.Add(new TextBlock{Text="选择一个正在运行的进程进行观察；不会结束或修改进程。"});
   processes.Height=140;monitor.Children.Add(processes);var tools=new WrapPanel();monitor.Children.Add(tools);
   Button(tools,"刷新进程",RefreshProcesses);Button(tools,"监控选中进程",()=>{
@@ -43,7 +43,8 @@ class AssistantWindow:Window {
   RefreshProcesses();
  }
  static StackPanel Page(TabControl tabs,string name){var panel=new StackPanel{Margin=new Thickness(25)};panel.SetValue(TextBlock.ForegroundProperty,WorkbenchTheme.Ink);panel.SetValue(TextBlock.FontWeightProperty,FontWeights.Normal);WorkbenchTheme.PageHeading(panel,name,"");tabs.Items.Add(new TabItem{Header=name,Content=new ScrollViewer{Content=panel,VerticalScrollBarVisibility=ScrollBarVisibility.Auto}});return panel;}
- static void Button(Panel parent,string name,Action action){var b=new System.Windows.Controls.Button{Content=name,Padding=new Thickness(12,6,12,6),Margin=new Thickness(0,6,8,2),HorizontalAlignment=HorizontalAlignment.Left};b.Click+=(s,e)=>action();parent.Children.Add(b);}
+ static System.Windows.Controls.Button Button(Panel parent,string name,Action action){var b=new System.Windows.Controls.Button{Content=name,Padding=new Thickness(12,6,12,6),Margin=new Thickness(0,6,8,2),HorizontalAlignment=HorizontalAlignment.Left};b.Click+=(s,e)=>action();parent.Children.Add(b);return b;}
+ async void CopyIp(){if(copyingIp)return;string text=snapshot==null?null:snapshot.IPText;if(String.IsNullOrWhiteSpace(text)){copyIpStatus.Text="暂无可复制的IP地址。";return;}copyingIp=true;copyIpButton.IsEnabled=false;copyIpStatus.Text="正在复制…";try{bool ok=await ClipboardCopy.WriteText(text);copyIpStatus.Text=ok?"IP地址已复制。":"剪贴板正被占用，复制未完成，请稍后重试。";}finally{copyingIp=false;copyIpButton.IsEnabled=true;}}
  void Error(string text){MessageBox.Show(text,"柯南桌面助手",MessageBoxButton.OK,MessageBoxImage.Information);}
  void Save(){try{lock(runtime)runtime.Save();}catch(IOException e){Error(e.Message);}catch(UnauthorizedAccessException e){Error(e.Message);}}
  void RefreshShortcuts(){string query=shortcutSearch.Text.Trim();shortcuts.ItemsSource=runtime.Config.Shortcuts.Where(s=>query.Length==0||s.Name.IndexOf(query,StringComparison.OrdinalIgnoreCase)>=0||s.Path.IndexOf(query,StringComparison.OrdinalIgnoreCase)>=0).ToArray();}
@@ -88,4 +89,8 @@ class AssistantWindow:Window {
   if(selected!=null)watched.SelectedItem=value.Watches.FirstOrDefault(p=>p.Id==selected.Id);
   history.ItemsSource=value.Notices;
  }
+}
+
+internal static class ClipboardCopy {
+ internal static async System.Threading.Tasks.Task<bool> WriteText(string text,Action<string> write=null){if(String.IsNullOrWhiteSpace(text))return false;write=write??(value=>Forms.Clipboard.SetDataObject(value,true,0,0));for(int attempt=0;attempt<4;attempt++){try{write(text);return true;}catch(System.Runtime.InteropServices.ExternalException){}if(attempt<3)await System.Threading.Tasks.Task.Delay(120);}return false;}
 }

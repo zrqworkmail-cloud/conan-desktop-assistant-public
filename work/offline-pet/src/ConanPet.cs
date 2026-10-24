@@ -155,7 +155,7 @@ partial class ConanPet:Window {
  double IdleSeconds(){var input=new LastInput{Size=(uint)Marshal.SizeOf(typeof(LastInput))};return GetLastInputInfo(ref input)?unchecked((uint)Environment.TickCount-input.Time)/1000.0:0;}
  void DisplayExtra(int start,double now,int ms){if(extraFrames[start]==null){DisplayFrame(start==0?0:7,PetLogic.Frame(start==0?0:7,(int)(now*1000)),now);return;}bodyMove.Y=0;sprite.Display(extraFrames[start+((int)(now*1000)/ms)%8]);}
  void OpenDetails(BubbleMessage message){
-  if(message==null)return;if(message.Key.StartsWith("codex-reset")){OpenTerminal();terminal.ShowQuotaPage();return;}if(message.Key.StartsWith("monitor:")){OpenTerminal();terminal.ShowPage("监控与预警");return;}if(message.Key.StartsWith("system:")){var notice=assistant.SystemNotifications.Find(message.Key);if(notice!=null&&DesktopActions.OpenNotificationApp(notice.AppId))return;OpenTerminal();terminal.ShowPage("通知中心");return;}var route=NotificationRoute.Resolve(message.Key);
+  if(message==null)return;if(message.Key.StartsWith("codex-reset")){OpenTerminal();terminal.ShowQuotaPage();return;}if(message.Key.StartsWith("monitor:proxy:")){OpenTerminal();terminal.ShowProxyPage();return;}if(message.Key.StartsWith("monitor:")){OpenTerminal();terminal.ShowPage("监控与预警");return;}if(message.Key.StartsWith("system:")){var notice=assistant.SystemNotifications.Find(message.Key);if(notice!=null&&DesktopActions.OpenNotificationApp(notice.AppId))return;OpenTerminal();terminal.ShowPage("通知中心");return;}var route=NotificationRoute.Resolve(message.Key);
   try{
    if(route.Kind=="codex"&&route.Value!=null&&DesktopActions.OpenUri(route.Value))return;
    if(route.Kind=="network"&&DesktopActions.OpenUri(route.Value))return;
