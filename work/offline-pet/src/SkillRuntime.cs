@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 using System.Linq;
@@ -24,5 +24,6 @@ public class SkillRuntime {
  public async Task<string> SyncCalendars(){ServicePointManager.SecurityProtocol|=SecurityProtocolType.Tls12;var status=new List<string>();foreach(int year in new[]{DateTime.Now.Year,DateTime.Now.Year+1})try{using(var client=new CalendarClient()){client.Encoding=Encoding.UTF8;var download=client.DownloadStringTaskAsync(new Uri("https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/"+year+".json"));if(await Task.WhenAny(download,Task.Delay(15000))!=download){client.CancelAsync();throw new WebException("日历同步超时。");}var text=await download;var value=ParseCalendar(text,year);Directory.CreateDirectory(calendarFolder);string path=Path.Combine(calendarFolder,year+".json"),temp=path+".tmp";File.WriteAllText(temp,text,new UTF8Encoding(false));if(File.Exists(path))File.Replace(temp,path,null);else File.Move(temp,path);Engine.Calendars[year]=value;status.Add(year+" 已同步");}}catch(Exception e){if(!(e is WebException)&&!(e is IOException)&&!(e is ArgumentException)&&!(e is UnauthorizedAccessException))throw;status.Add(year+" 未更新（可能尚未公布或网络不可用），保留已有缓存");}CalendarStatus=String.Join("；",status.ToArray());return CalendarStatus;}
  class CalendarClient:WebClient {protected override WebRequest GetWebRequest(Uri address){var request=base.GetWebRequest(address);request.Timeout=15000;return request;}}
  public void Save(){if(LoadError!=null)throw new IOException(LoadError);string temp=path+".tmp";File.WriteAllText(temp,json.Serialize(Engine.Data),new UTF8Encoding(false));if(File.Exists(path))File.Replace(temp,path,null);else File.Move(temp,path);Engine.Dirty=false;}
+
  public List<SkillAlert> Tick(DateTime now){if(LoadError!=null)return new List<SkillAlert>();var result=Engine.Tick(now);if(Engine.Dirty)Save();return result;}
 }

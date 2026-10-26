@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Globalization;
@@ -31,7 +31,7 @@ partial class TerminalWindow {
  }
  static string TrafficSize(double bytes){return bytes>=1073741824?(bytes/1073741824).ToString("F2")+" GiB":(bytes/1048576).ToString("F1")+" MiB";}
  void RefreshMonitor(){if(page=="线索档案馆"){RefreshArchive();return;}foreach(var pair in monitorChecks)pair.Key.IsChecked=pair.Value();if(page!="监控与预警"&&page!="侦探备忘录")return;if(proxyHealthStatus!=null)proxyHealthStatus.Text=assistant.ProxyHealth.Status;if(sensorStatus!=null)sensorStatus.Text=last==null||last.Sample==null?"等待检查数据来源…":"CPU温度："+last.Sample.TemperatureState+"\n磁盘："+last.Sample.DiskState;if(limitStatus!=null)limitStatus.Text=assistant.Limiter.Status;if(quotaStatus!=null){var q=last==null||last.Sample==null?null:last.Sample.Quota;quotaStatus.Text=q==null?"等待额度核验…":"5h 剩余 "+MonitorEngine.Format(last.Sample,"codex5h")+" · 周剩余 "+MonitorEngine.Format(last.Sample,"codex7d")+"\n"+q.State+(q.CheckedUtc==default(DateTime)?"":" · 核验于 "+q.CheckedUtc.ToLocalTime().ToString("HH:mm:ss"));}if(quotaCountdown!=null){var q=last==null||last.Sample==null?null:last.Sample.Quota;quotaCountdown.Text="五小时重置 · "+CodexQuotaReader.Countdown(q,300,DateTime.UtcNow)+"\n周额度重置 · "+CodexQuotaReader.Countdown(q,10080,DateTime.UtcNow);}if(wakeStatus!=null&&assistant.Config.Monitor.Quota.Wake!=null)wakeStatus.Text=assistant.Config.Monitor.Quota.Wake.LastResult;if(subscriptionStatus!=null&&assistant.Config.Monitor.Quota.Subscription!=null)subscriptionStatus.Text=assistant.Config.Monitor.Quota.Subscription.Status(DateTime.Now)+"\n官方账户套餐："+(last==null||last.Sample==null||last.Sample.Quota==null||String.IsNullOrEmpty(last.Sample.Quota.PlanType)?"尚未获取":last.Sample.Quota.PlanType)+" · 接口未提供到期日";if(quotaHistory!=null){lock(assistant){var history=assistant.Config.Monitor.Quota.ResetHistory;quotaHistory.Text=history==null||history.Count==0?"尚未检测到重置记录。首次读取仅建立基线。":String.Join("\n\n",history.AsEnumerable().Reverse().Take(8).Select(x=>x.Report()));}}if(monitorStatus!=null)monitorStatus.Text=(TaskbarState==null?"任务栏尚未初始化":TaskbarState())+(last==null||last.Sample==null?"":"\n磁盘 "+MonitorEngine.Format(last.Sample,"disk")+" · 读 "+Telemetry.Speed(last.Sample.DiskRead)+" · 写 "+Telemetry.Speed(last.Sample.DiskWrite)+" · CPU频率 "+MonitorEngine.Format(last.Sample,"frequency"));
-  RefreshTrafficHistory();
+  if(quotaDiagnostics!=null)quotaDiagnostics.Text=assistant.QuotaReader.DiagnosticStatus;RefreshTrafficHistory();
  }
 }
 partial class TerminalWindow {

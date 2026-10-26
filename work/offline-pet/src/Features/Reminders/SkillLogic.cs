@@ -16,9 +16,10 @@ public class SkillReminder {
 public class SkillNote {public string Id,Title,Text;public DateTime UpdatedUtc;public override string ToString(){return Title;}}
 public class WorkEndSlot {public string Label="下班";public bool Enabled;public int MinuteOfDay=-1;public string ScheduleKey="";public List<int> Fired=new List<int>();}
 public class WorkEndSettings:WorkEndSlot {public List<int> AdvanceMinutes=ReminderPoints.WorkDefaults.ToList();public bool Sound=true,Gestures=true;public int CalendarMode;public List<WorkEndSlot> Slots;}
+public class CalendarSyncSettings {public bool Enabled;}
 public class HolidayDay {public string name,date;public bool isOffDay;}
 public class HolidayYear {public int year;public string[] papers;public List<HolidayDay> days;}
-public class SkillData {public List<int> WellnessAdvanceMinutes=new List<int>();public WorkEndSettings EndOfWork=new WorkEndSettings();public Dictionary<string,int> FocusDays=new Dictionary<string,int>();public SkillFocus Focus=new SkillFocus();public List<SkillReminder> Reminders=new List<SkillReminder>();public List<SkillNote> Notes=new List<SkillNote>();public int WaterMinutes=45,RestMinutes=60;}
+public class SkillData {public List<int> WellnessAdvanceMinutes=new List<int>();public WorkEndSettings EndOfWork=new WorkEndSettings();public CalendarSyncSettings CalendarSync=new CalendarSyncSettings();public Dictionary<string,int> FocusDays=new Dictionary<string,int>();public SkillFocus Focus=new SkillFocus();public List<SkillReminder> Reminders=new List<SkillReminder>();public List<SkillNote> Notes=new List<SkillNote>();public int WaterMinutes=45,RestMinutes=60;}
 public class SkillAlert {public string Key,Text;public int Row,Count;}
 public class RouteInfo {public string Kind,Value;}
 public static class NotificationRoute {
@@ -50,7 +51,7 @@ public static class SkillLogic {
 }
 public class SkillEngine {
  public readonly SkillData Data;public bool Dirty;public readonly Dictionary<int,HolidayYear> Calendars=new Dictionary<int,HolidayYear>();
- public SkillEngine(SkillData data){Data=data;if(Data.EndOfWork==null)Data.EndOfWork=new WorkEndSettings();if(Data.EndOfWork.Fired==null)Data.EndOfWork.Fired=new List<int>();if(Data.FocusDays==null)Data.FocusDays=new Dictionary<string,int>();}
+ public SkillEngine(SkillData data){Data=data;if(Data.CalendarSync==null)Data.CalendarSync=new CalendarSyncSettings();if(Data.EndOfWork==null)Data.EndOfWork=new WorkEndSettings();if(Data.EndOfWork.Fired==null)Data.EndOfWork.Fired=new List<int>();if(Data.FocusDays==null)Data.FocusDays=new Dictionary<string,int>();}
  public static void Minutes(int value,int maximum){if(value<1||value>maximum)throw new ArgumentOutOfRangeException("minutes","分钟范围为1–"+maximum+"。");}
  public double FocusRemaining(DateTime now){return Data.Focus.Paused?Data.Focus.RemainingSeconds:Data.Focus.Running?Math.Max(0,(Data.Focus.EndUtc-now).TotalSeconds):0;}
  void Day(DateTime now){string day=now.ToLocalTime().ToString("yyyy-MM-dd");if(Data.Focus.Day!=day){Data.Focus.Day=day;Data.Focus.Completed=0;Data.Focus.TotalMinutes=0;Dirty=true;}}

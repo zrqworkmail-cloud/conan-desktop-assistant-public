@@ -6,7 +6,7 @@ $runtime='C:\Windows\Microsoft.NET\Framework64\v4.0.30319'
 $compiler=Join-Path $runtime 'csc.exe'
 if(-not (Test-Path $compiler)){throw 'Windows x64 .NET Framework compiler is required.'}
 New-Item (Join-Path $destination 'network-limit') -ItemType Directory -Force|Out-Null
-$references=@('/r:System.Windows.Forms.dll','/r:System.Drawing.dll','/r:System.Xaml.dll','/r:System.Web.Extensions.dll',"/r:$runtime\WPF\WindowsBase.dll","/r:$runtime\WPF\PresentationCore.dll","/r:$runtime\WPF\PresentationFramework.dll")
+$references=@('/r:System.Windows.Forms.dll','/r:System.Drawing.dll','/r:System.Xaml.dll','/r:System.Web.Extensions.dll','/r:System.Security.dll',"/r:$runtime\WPF\WindowsBase.dll","/r:$runtime\WPF\PresentationCore.dll","/r:$runtime\WPF\PresentationFramework.dll")
 $helper=Join-Path $destination 'network-limit\ConanBandwidth.exe'
 & $compiler /nologo /codepage:65001 /target:winexe /platform:x64 /define:LIMITER_HELPER /optimize+ "/out:$helper" src\DownloadLimiter.cs network-limit\ConanBandwidth.cs
 if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
