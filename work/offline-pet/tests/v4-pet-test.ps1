@@ -1,4 +1,5 @@
-﻿$ErrorActionPreference='Stop'
+﻿. (Join-Path $PSScriptRoot 'plugin-test-reference.ps1')
+$ErrorActionPreference='Stop'
 $env:CONAN_PET_TEST_MODE='1'
 [Console]::OutputEncoding=[System.Text.Encoding]::UTF8
 Set-Location (Split-Path $PSScriptRoot -Parent)
@@ -10,7 +11,8 @@ $env:CONAN_PET_EVENT_DIR=Join-Path $destination 'events'
 @('x=400','y=300','scale=1.15','roam=false','gaze=false','lines=true')|Set-Content (Join-Path $destination 'settings.ini')
 $runtime='C:\Windows\Microsoft.NET\Framework64\v4.0.30319'
 $references=@('/r:System.Windows.Forms.dll','/r:System.Drawing.dll','/r:System.Xaml.dll','/r:System.Web.Extensions.dll',"/r:$runtime\WPF\WindowsBase.dll","/r:$runtime\WPF\PresentationCore.dll","/r:$runtime\WPF\PresentationFramework.dll")
-& "$runtime\csc.exe" /nologo /codepage:65001 /target:exe /platform:x64 /main:V4PetTests "/out:$destination\V4PetTests.exe" /win32manifest:app.manifest $references @(Get-ChildItem -LiteralPath (Join-Path $PWD 'src') -Recurse -Filter '*.cs' | Sort-Object FullName | ForEach-Object {$_.FullName}) tests\V4PetTests.cs
+Copy-Item $pluginApi (Split-Path "$destination\V4PetTests.exe" -Parent) -Force
+& "$runtime\csc.exe" $pluginApiReference /nologo /codepage:65001 /target:exe /platform:x64 /main:V4PetTests "/out:$destination\V4PetTests.exe" /win32manifest:app.manifest $references @(Get-ChildItem -LiteralPath (Join-Path $PWD 'src') -Recurse -Filter '*.cs' | Sort-Object FullName | ForEach-Object {$_.FullName}) tests\V4PetTests.cs
 if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
 & "$destination\V4PetTests.exe" (Join-Path $PWD 'qa')
 exit $LASTEXITCODE

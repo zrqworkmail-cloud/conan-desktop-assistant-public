@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference='Stop'
+$ErrorActionPreference='Stop'
 [Console]::OutputEncoding=[System.Text.Encoding]::UTF8
 $root=Split-Path $PSScriptRoot -Parent
 Add-Type -AssemblyName UIAutomationClient,UIAutomationTypes
@@ -11,7 +11,8 @@ public class ConanPerfNative {
 '@
 $dir=Join-Path $env:TEMP ('conan-v4-perf-'+[Guid]::NewGuid().ToString('N'))
 New-Item $dir -ItemType Directory|Out-Null
-foreach($name in @('ConanPet.exe','conan.png','conan.ico','台词.txt','detective-console-background-v1.png','detective-button-plate-v1.png')){Copy-Item (Join-Path $root ('dist\'+$name)) $dir}
+foreach($name in @('ConanPet.exe','台词.txt')){Copy-Item (Join-Path $root ('dist\'+$name)) $dir}
+Copy-Item (Join-Path $root 'dist\images') $dir -Recurse
 $env:CONAN_PET_TEST_MODE='1';$env:CONAN_PET_EVENT_DIR=Join-Path $dir 'events';$env:CONAN_NOTIFICATION_DIR=Join-Path $dir 'notifications'
 @('x=400','y=300','scale=1.15','roam=false','gaze=false','lines=false')|Set-Content (Join-Path $dir 'settings.ini')
 $p=Start-Process (Join-Path $dir 'ConanPet.exe') -PassThru

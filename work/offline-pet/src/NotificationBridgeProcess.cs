@@ -1,0 +1,8 @@
+using System;using System.Diagnostics;using System.Runtime.InteropServices;using System.Text;
+// Gracefully closes only this product's signed, packaged notification bridge.
+internal static class NotificationBridgeProcess {
+ const string Family="ConanAssistant.NotificationBridge_jgfem61gvzcbw";
+ [DllImport("kernel32.dll",CharSet=CharSet.Unicode)]static extern int GetPackageFamilyName(IntPtr process,ref int length,StringBuilder name);
+ internal static bool IsBridge(Process process){try{if(!String.Equals(process.ProcessName,"ConanNotificationBridge",StringComparison.OrdinalIgnoreCase))return false;int length=0;int status=GetPackageFamilyName(process.Handle,ref length,null);if(status!=122||length<1||length>512)return false;var name=new StringBuilder(length);return GetPackageFamilyName(process.Handle,ref length,name)==0&&String.Equals(name.ToString(),Family,StringComparison.Ordinal);}catch(InvalidOperationException){return false;}catch(System.ComponentModel.Win32Exception){return false;}catch(EntryPointNotFoundException){return false;}}
+ internal static void RequestClose(){var pets=Process.GetProcessesByName("ConanPet");try{int current=Process.GetCurrentProcess().Id;foreach(var p in pets)try{if(p.Id!=current&&!p.HasExited)return;}catch(InvalidOperationException){}}finally{foreach(var p in pets)p.Dispose();}var processes=Process.GetProcessesByName("ConanNotificationBridge");foreach(var p in processes)using(p){try{if(IsBridge(p)&&!p.HasExited){p.CloseMainWindow();if(!p.WaitForExit(1500)&&!p.HasExited)p.Kill();}}catch(InvalidOperationException){}catch(System.ComponentModel.Win32Exception){}}}
+}

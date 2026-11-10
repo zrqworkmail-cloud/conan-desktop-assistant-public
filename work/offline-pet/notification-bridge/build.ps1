@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference='Stop'
+$ErrorActionPreference='Stop'
 [Console]::OutputEncoding=[System.Text.Encoding]::UTF8
 $runtime='C:\Windows\Microsoft.NET\Framework64\v4.0.30319'
 $sdk='C:\Program Files (x86)\Windows Kits\10'
@@ -11,7 +11,7 @@ $refs=@('/r:System.Xaml.dll','/r:System.Web.Extensions.dll',"/r:$runtime\System.
 if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
 Copy-Item (Join-Path $PSScriptRoot 'AppxManifest.xml') $package -Force
 Add-Type -AssemblyName System.Drawing
-$icon=New-Object System.Drawing.Icon (Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\conan.ico')
+$icon=New-Object System.Drawing.Icon (Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\images\conan.ico')
 $bitmap=$icon.ToBitmap();$bitmap.Save((Join-Path $package 'logo.png'),[System.Drawing.Imaging.ImageFormat]::Png);$bitmap.Dispose();$icon.Dispose()
 & "$sdk\bin\$version\x64\makeappx.exe" pack /d $package /p (Join-Path $out 'ConanNotificationBridge-unsigned.msix') /o
 if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}

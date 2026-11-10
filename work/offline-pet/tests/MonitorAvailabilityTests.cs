@@ -1,7 +1,15 @@
 using System;using System.IO;using System.Reflection;using System.Threading;using System.Web.Script.Serialization;
 class MonitorAvailabilityTests {
  static int checks,failures;static void Check(bool ok,string n){checks++;if(!ok)failures++;Console.WriteLine((ok?"PASS ":"FAIL ")+n);}
- static SystemSample Cached(int interval,int age){using(var t=new Telemetry()){var setting=typeof(Telemetry).GetField("RefreshMilliseconds");if(setting!=null)setting.SetValue(t,interval);typeof(Telemetry).GetField("extended",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(t,new SystemSample{Utc=DateTime.UtcNow.AddSeconds(-age),DiskBusy=23.5,CpuMHz=3500,DiskState="fixture"});return t.Sample(1,1,2);}}
+ static SystemSample Cached(int interval,int age){
+ string folder=Path.Combine(Path.GetTempPath(),"conan-cache-check-"+Guid.NewGuid().ToString("N"));
+ try{using(var plugins=new PluginManager(folder)){plugins.Install(Environment.GetEnvironmentVariable("CONAN_TEST_MONITOR_PACKAGE"));plugins.SetEnabled("system-monitor",true);
+ var backend=plugins.Service<Conan.PluginApi.ITelemetryBackend>("system-monitor");if(backend==null)throw new Exception(plugins.List()[0].Error);
+ var type=backend.GetType();type.GetField("gpuSampling",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(backend,1);type.GetField("extraSampling",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(backend,1);
+ var field=type.GetField("extended",BindingFlags.Instance|BindingFlags.NonPublic);var json=new JavaScriptSerializer();field.SetValue(backend,json.Deserialize(json.Serialize(new SystemSample{Utc=DateTime.UtcNow.AddSeconds(-age),DiskBusy=23.5,CpuMHz=3500,DiskState="fixture"}),field.FieldType));
+ using(var t=new Telemetry(plugins)){t.RefreshMilliseconds=interval;t.ProcessReportingEnabled=false;return t.Sample(1,1,2);}
+ }}finally{if(Directory.Exists(folder))Directory.Delete(folder,true);}
+ }
  [STAThread]static int Main(string[] args){try{
  Check(Cached(5000,6).DiskBusy==23.5,"five-second polling preserves still-valid six-second disk sample");
  Check(!Cached(1000,6).DiskBusy.HasValue,"one-second polling still hides expired disk sample");

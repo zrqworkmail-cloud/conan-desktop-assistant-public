@@ -15,7 +15,7 @@ public class SkillReminder {
 }
 public class SkillNote {public string Id,Title,Text;public DateTime UpdatedUtc;public override string ToString(){return Title;}}
 public class WorkEndSlot {public string Label="下班";public bool Enabled;public int MinuteOfDay=-1;public string ScheduleKey="";public List<int> Fired=new List<int>();}
-public class WorkEndSettings:WorkEndSlot {public List<int> AdvanceMinutes=ReminderPoints.WorkDefaults.ToList();public bool Sound=true,Gestures=true;public int CalendarMode;public List<WorkEndSlot> Slots;}
+public class WorkEndSettings:WorkEndSlot {public List<int> AdvanceMinutes=ReminderPoints.WorkDefaults.ToList();public bool Sound=true,Gestures=true,DueAlert=true;public int CalendarMode;public List<WorkEndSlot> Slots;}
 public class CalendarSyncSettings {public bool Enabled;}
 public class HolidayDay {public string name,date;public bool isOffDay;}
 public class HolidayYear {public int year;public string[] papers;public List<HolidayDay> days;}
@@ -89,7 +89,7 @@ public class SkillEngine {
   Data.EndOfWork.Enabled=enabled;Data.EndOfWork.CalendarMode=mode;Data.EndOfWork.Slots=saved;Dirty=true;
  }
  List<SkillAlert> WorkEndTick(DateTime now){var alerts=new List<SkillAlert>();if(!Data.EndOfWork.Enabled)return alerts;var local=now.ToLocalTime();if(WorkDay(local)!=true)return alerts;
-  foreach(var s in WorkEndSlots().OrderBy(s=>s.MinuteOfDay)){if(!s.Enabled||s.MinuteOfDay<0||s.MinuteOfDay>=1440)continue;int minute=(int)Math.Ceiling((local.Date.AddMinutes(s.MinuteOfDay)-local).TotalMinutes);if(!(Data.EndOfWork.AdvanceMinutes??ReminderPoints.WorkDefaults.ToList()).Contains(minute))continue;string key=local.ToString("yyyy-MM-dd")+":"+s.MinuteOfDay+":"+Data.EndOfWork.CalendarMode;if(s.Fired==null)s.Fired=new List<int>();if(s.ScheduleKey!=key){s.ScheduleKey=key;s.Fired.Clear();Dirty=true;}if(s.Fired.Contains(minute))continue;s.Fired.Add(minute);Dirty=true;alerts.Add(new SkillAlert{Key="work-end:"+key+":"+minute,Text=minute==0?s.Label+"时间到了。":"距离"+s.Label+"（"+TimeSpan.FromMinutes(s.MinuteOfDay).ToString(@"hh\:mm")+"）还有 "+minute+" 分钟。",Row=3,Count=minute});}return alerts;
+  foreach(var s in WorkEndSlots().OrderBy(s=>s.MinuteOfDay)){if(!s.Enabled||s.MinuteOfDay<0||s.MinuteOfDay>=1440)continue;double seconds=(local.Date.AddMinutes(s.MinuteOfDay)-local).TotalSeconds;int minute=seconds<=0&&seconds>=-300?0:(int)Math.Ceiling(seconds/60.0);if(minute==0?!Data.EndOfWork.DueAlert:!(Data.EndOfWork.AdvanceMinutes??ReminderPoints.WorkDefaults.ToList()).Contains(minute))continue;string key=local.ToString("yyyy-MM-dd")+":"+s.MinuteOfDay+":"+Data.EndOfWork.CalendarMode;if(s.Fired==null)s.Fired=new List<int>();if(s.ScheduleKey!=key){s.ScheduleKey=key;s.Fired.Clear();Dirty=true;}if(s.Fired.Contains(minute))continue;s.Fired.Add(minute);Dirty=true;alerts.Add(new SkillAlert{Key="work-end:"+key+":"+minute,Text=minute==0?"🔔 "+s.Label+"时间到了！现在可以下班啦。":"距离"+s.Label+"（"+TimeSpan.FromMinutes(s.MinuteOfDay).ToString(@"hh\:mm")+"）还有 "+minute+" 分钟。",Row=3,Count=minute});}return alerts;
  }
  public SkillReminder AddCountdown(string label,int minutes,DateTime now){Minutes(minutes,1440);return AddReminder(label,now.AddMinutes(minutes),now);}
  public SkillReminder AddReminder(string label,DateTime due,DateTime now){

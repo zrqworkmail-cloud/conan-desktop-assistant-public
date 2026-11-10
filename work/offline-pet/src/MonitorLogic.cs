@@ -7,7 +7,7 @@ public class MonitorConfig {
  public bool ArchiveBars=true,ArchiveLines=true;public bool CollectHistory=true,CodexUsageHistory=true,ClashHistory;public string HistoryCodexHome="",ClashController="http://127.0.0.1:9090";
  public bool ProcessReportEnabled=true,ProcessReportOnAlert=true;public int ProcessReportCount=3;
  public string VisualStyle="original";
- public bool StartupAuthorizationPrompt=true;public double DownloadLimitMiB=10;public int RefreshMilliseconds=1000;public CodexQuotaConfig Quota=new CodexQuotaConfig();
+ public bool StartupAuthorizationPrompt=true;public double DownloadLimitMiB=10,UploadLimitMiB=10;public int RefreshMilliseconds=1000;public CodexQuotaConfig Quota=new CodexQuotaConfig();
  public string ExitProxyMode="system",ExitProxyAddress="";
  public bool ProxyTimeoutAlerts=true;public int ProxyFailureCount=2,ProxyCheckSeconds=60,ProxyCooldownSeconds=300;public bool ExitLookupEnabled;public string CardBackground="",TaskbarScreen="";public double CardShade=.58;
  public string ExpectedExitIp="",ExpectedExitCountry="";

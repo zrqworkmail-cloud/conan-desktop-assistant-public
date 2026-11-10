@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Globalization;
@@ -79,13 +79,13 @@ partial class ConanPet:Window {
    System.Windows.Interop.HwndSource.FromHwnd(h).AddHook(WindowMessage);
   };
   ResizeMode=ResizeMode.NoResize;Topmost=true;ShowInTaskbar=false;ShowActivated=false;WindowStartupLocation=WindowStartupLocation.Manual;
-  var image=new BitmapImage();image.BeginInit();image.UriSource=new Uri(Path.Combine(home,"conan.png"));image.CacheOption=BitmapCacheOption.OnLoad;image.EndInit();image.Freeze();
+  var image=new BitmapImage();image.BeginInit();image.UriSource=new Uri(ImageAssets.Resolve(home,"conan.png"));image.CacheOption=BitmapCacheOption.OnLoad;image.EndInit();image.Freeze();
   if(image.PixelWidth!=1536||image.PixelHeight!=2288)throw new InvalidDataException("conan.png 图集尺寸应为1536×2288。");
   for(int row=0;row<11;row++)for(int col=0;col<8;col++){
    var crop=new CroppedBitmap(image,new Int32Rect(col*192,row*208,192,208));
    var converted=new FormatConvertedBitmap(crop,PixelFormats.Bgra32,null,0);converted.Freeze();frames[row,col]=converted;
   }
-  for(int kind=0;kind<2;kind++){string extraPath=Path.Combine(home,kind==0?"conan-sleep-v55.png":"conan-search-v55.png");if(!File.Exists(extraPath))continue;var extra=new BitmapImage();extra.BeginInit();extra.UriSource=new Uri(extraPath);extra.CacheOption=BitmapCacheOption.OnLoad;extra.EndInit();extra.Freeze();if(extra.PixelWidth!=1536||extra.PixelHeight!=208)throw new InvalidDataException("追加动作图集尺寸应为1536×208。");for(int i=0;i<8;i++){var crop=new CroppedBitmap(extra,new Int32Rect(i*192,0,192,208));var converted=new FormatConvertedBitmap(crop,PixelFormats.Bgra32,null,0);converted.Freeze();extraFrames[kind*8+i]=converted;}}
+  for(int kind=0;kind<2;kind++){string extraPath=ImageAssets.Resolve(home,kind==0?"conan-sleep-v55.png":"conan-search-v55.png");if(!File.Exists(extraPath))continue;var extra=new BitmapImage();extra.BeginInit();extra.UriSource=new Uri(extraPath);extra.CacheOption=BitmapCacheOption.OnLoad;extra.EndInit();extra.Freeze();if(extra.PixelWidth!=1536||extra.PixelHeight!=208)throw new InvalidDataException("追加动作图集尺寸应为1536×208。");for(int i=0;i<8;i++){var crop=new CroppedBitmap(extra,new Int32Rect(i*192,0,192,208));var converted=new FormatConvertedBitmap(crop,PixelFormats.Bgra32,null,0);converted.Freeze();extraFrames[kind*8+i]=converted;}}
   signature=new SpriteActions(home);
   AllowDrop=true;DragOver+=(s,e)=>{e.Effects=e.Data.GetDataPresent(DataFormats.FileDrop)?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;};Drop+=(s,e)=>{var paths=e.Data.GetData(DataFormats.FileDrop) as string[];if(paths!=null&&paths.Length>0&&File.Exists(paths[0])){OpenTerminal();terminal.OpenEvidence(paths[0]);PlaySignature("deduction",2,false);}e.Handled=true;};
   sprite.RenderTransform=bodyMove;UseLayoutRounding=true;
@@ -108,10 +108,10 @@ partial class ConanPet:Window {
    catch(UnauthorizedAccessException error){skillTicker.Stop();Say("技能数据无法写入："+error.Message);}
   };
   CreateTray();InitializeMonitorWindows();
-  Loaded+=(s,e)=>{bubble.Owner=this;SetWindowText(new System.Windows.Interop.WindowInteropHelper(this).Handle,WindowTitle);ClampWindow();sprite.Display(frames[0,0]);Say("小侦探就位。点击我听台词，右键打开菜单。");nextWalk=8;SyncHotkeys();ticker.Start();skillTicker.Start();appliedMonitorInterval=Math.Max(500,Math.Min(5000,assistant.Config.Monitor.RefreshMilliseconds));assistantTimer=new System.Threading.Timer(PollAssistant,null,0,appliedMonitorInterval);CheckStartupConnections();};
+  Loaded+=(s,e)=>{bubble.Owner=this;SetWindowText(new System.Windows.Interop.WindowInteropHelper(this).Handle,WindowTitle);ClampWindow();sprite.Display(frames[0,0]);Say("小侦探就位。点击我听台词，右键打开菜单。");nextWalk=8;SyncHotkeys();ticker.Start();skillTicker.Start();appliedMonitorInterval=Math.Max(500,Math.Min(5000,assistant.Config.Monitor.RefreshMilliseconds));assistantTimer=new System.Threading.Timer(PollAssistant,null,0,appliedMonitorInterval);CheckStartupConnections();if(TestMode&&Environment.GetEnvironmentVariable("CONAN_PET_OPEN_PLUGINS")=="1"){OpenTerminal();terminal.ShowPage("插件中心");}};
   ticker.Interval=TimeSpan.FromMilliseconds(1000.0/60);ticker.Tick+=Tick;
   Microsoft.Win32.SystemEvents.DisplaySettingsChanged+=OnDisplayChanged;
-  Closed+=(s,e)=>{shuttingDown=true;monitorPositionTimer.Stop();DisposeTaskbarViews();if(monitorCard!=null)monitorCard.Close();lock(assistant){if(assistant.Monitor.Dirty||assistant.QuotaReader.Dirty)assistant.Save();assistant.Archive.Flush();assistant.Telemetry.Dispose();assistant.Limiter.Dispose();}StopFootball();if(footballWindow!=null)footballWindow.Close();ReleaseHotkeys();if(voices!=null)voices.Dispose();if(advanced!=null)advanced.Dispose();skillTicker.Stop();if(terminal!=null)terminal.Close();if(skillsWindow!=null)skillsWindow.Close();bubble.Close();if(assistantTimer!=null)assistantTimer.Dispose();if(assistantWindow!=null)assistantWindow.Close();ticker.Stop();Microsoft.Win32.SystemEvents.DisplaySettingsChanged-=OnDisplayChanged;SavePreferences();tray.Visible=false;tray.Dispose();if(trayIcon!=null)trayIcon.Dispose();};
+  Closed+=(s,e)=>{shuttingDown=true;NotificationBridgeProcess.RequestClose();if(assistantTimer!=null)assistantTimer.Dispose();assistant.QuotaReader.Dispose();monitorPositionTimer.Stop();DisposeTaskbarViews();if(monitorCard!=null)monitorCard.Close();lock(assistant){if(assistant.Monitor.Dirty||assistant.QuotaReader.Dirty)assistant.Save();assistant.Archive.Flush();assistant.MinuteHistory.Flush();assistant.Telemetry.Dispose();assistant.Plugins.Dispose();assistant.Limiter.Dispose();assistant.UploadLimiter.Dispose();}StopFootball();if(footballWindow!=null)footballWindow.Close();ReleaseHotkeys();if(voices!=null)voices.Dispose();if(advanced!=null)advanced.Dispose();skillTicker.Stop();if(terminal!=null)terminal.Close();if(skillsWindow!=null)skillsWindow.Close();bubble.Close();if(assistantWindow!=null)assistantWindow.Close();ticker.Stop();Microsoft.Win32.SystemEvents.DisplaySettingsChanged-=OnDisplayChanged;SavePreferences();tray.Visible=false;tray.Dispose();if(trayIcon!=null)trayIcon.Dispose();};
  }
  IntPtr WindowMessage(IntPtr hwnd,int message,IntPtr w,IntPtr l,ref bool handled){
   if(message==0x0312){if(w.ToInt32()==0x4311){OpenAssistant();assistantWindow.FocusSearch();}if(w.ToInt32()==0x4312)OpenTerminal();handled=true;}
@@ -134,8 +134,8 @@ partial class ConanPet:Window {
  void EnsureAssistant(){if(assistantWindow==null){assistantWindow=new AssistantWindow(assistant,home);if(assistantSnapshot!=null)assistantWindow.Update(assistantSnapshot);}}
  void OpenAssistant(){EnsureAssistant();OpenTerminal();terminal.ShowPage("快捷入口");}
  FrameworkElement ToolPage(string page){if(page=="快捷入口"||page=="系统与网络"||page=="进程监控"||page=="Codex状态"||page=="通知记录"){EnsureAssistant();return assistantWindow.TakePage(page);}EnsureSkills();return skillsWindow.TakePage(page);}
- void EnsureSkills(){if(skillsWindow==null){skillsWindow=new SkillsWindow(skills,advanced);skillsWindow.Emotion+=row=>{Animate(row);PlayVoice("task-complete",null);};skillsWindow.VoiceEvent+=kind=>PlayVoice(kind,null);}}
- void NotifyWorkEnd(SkillAlert alert){if(shuttingDown||DesktopActions.FullScreenForeground())return;if(assistant.Config.Bubbles){var message=new BubbleMessage{Key="work-end",Text=alert.Text,Row=3,Notification=true};if(IsVisible)messages.Add(message,clock.Elapsed.TotalSeconds);else{lastTrayMessage=message;tray.ShowBalloonTip(6000,"柯南 · 下班倒计时",alert.Text,Forms.ToolTipIcon.Info);}}if(!IsVisible)return;var options=skills.Engine.Data.EndOfWork;if(options.Gestures){PlaySignature(alert.Count>=1&&alert.Count<=20?"count":"deduction",2.4,false);signatureCount=alert.Count;}if(options.Sound&&alert.Count>=1&&alert.Count<=20)voices.PlayCountReminder(alert.Count,false);}
+ void EnsureSkills(){if(skillsWindow==null){skillsWindow=new SkillsWindow(skills,advanced);skillsWindow.Plugins=assistant.Plugins;skillsWindow.Emotion+=row=>{Animate(row);PlayVoice("task-complete",null);};skillsWindow.VoiceEvent+=kind=>PlayVoice(kind,null);}}
+ void NotifyWorkEnd(SkillAlert alert){if(shuttingDown)return;bool fullscreen=DesktopActions.FullScreenForeground();if(fullscreen&&alert.Count!=0)return;if(alert.Count==0){lastTrayMessage=new BubbleMessage{Key=alert.Key,Text=alert.Text,Row=3,Notification=true};tray.ShowBalloonTip(12000,"柯南 · 下班时间到",alert.Text,Forms.ToolTipIcon.Info);if(skills.Engine.Data.EndOfWork.Sound&&!fullscreen)System.Media.SystemSounds.Asterisk.Play();}if(fullscreen)return;if(assistant.Config.Bubbles){var message=new BubbleMessage{Key="work-end",Text=alert.Text,Row=3,Notification=true};if(IsVisible)messages.Add(message,clock.Elapsed.TotalSeconds);else if(alert.Count!=0){lastTrayMessage=message;tray.ShowBalloonTip(6000,"柯南 · 下班倒计时",alert.Text,Forms.ToolTipIcon.Info);}}if(!IsVisible)return;var options=skills.Engine.Data.EndOfWork;if(options.Gestures){PlaySignature(alert.Count>=1&&alert.Count<=20?"count":"deduction",2.4,false);signatureCount=alert.Count;}if(options.Sound&&alert.Count>=1&&alert.Count<=20)voices.PlayCountReminder(alert.Count,false);}
  void NotifyUser(string key,string text,int row){
   if(shuttingDown||DesktopActions.FullScreenForeground())return;bool warning=key.StartsWith("monitor:")||key.StartsWith("codex-reset");var cfg=assistant.Config.Monitor;
   if(key.StartsWith("monitor:")){if(cfg.AlertActions)PlaySignature("alert",2.4,false);if(cfg.AlertSound){voices.PlayMonitorAlert(!IsVisible);}}
@@ -285,7 +285,7 @@ partial class ConanPet:Window {
  Forms.ToolStripMenuItem Item(string text,Action handler){var item=new Forms.ToolStripMenuItem(text);item.Click+=(s,e)=>handler();return item;}
  [DllImport("user32.dll")]static extern bool DestroyIcon(IntPtr icon);
  void CreateTray(){
-  using(var atlas=new Drawing.Bitmap(Path.Combine(home,"conan.png")))
+  using(var atlas=new Drawing.Bitmap(ImageAssets.Resolve(home,"conan.png")))
   using(var portrait=new Drawing.Bitmap(32,32)){
    using(var graphics=Drawing.Graphics.FromImage(portrait)){graphics.InterpolationMode=Drawing.Drawing2D.InterpolationMode.NearestNeighbor;graphics.PixelOffsetMode=Drawing.Drawing2D.PixelOffsetMode.Half;graphics.DrawImage(atlas,new Drawing.Rectangle(0,4,32,24),new Drawing.Rectangle(42,47,108,77),Drawing.GraphicsUnit.Pixel);}
    IntPtr handle=portrait.GetHicon();try{using(var icon=Drawing.Icon.FromHandle(handle))trayIcon=(Drawing.Icon)icon.Clone();}finally{DestroyIcon(handle);}
